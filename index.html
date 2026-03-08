@@ -57,6 +57,10 @@
         /* FILTER SIDEBAR */
         #filter-sidebar { position: fixed; top: 0; left: -400px; width: 350px; height: 100vh; background: rgba(255,255,255,0.85); backdrop-filter: blur(25px); border-right: 1px solid rgba(0,0,0,0.05); z-index: 900; padding: 140px 40px 40px; transition: 0.6s var(--ease); box-shadow: 20px 0 50px rgba(0,0,0,0.05); overflow-y: auto; }
         #filter-sidebar.open { left: 0; }
+        
+        .close-filter-btn { position: absolute; top: 40px; right: 40px; background: none; border: none; font-size: 24px; font-weight: 800; cursor: pointer; color: #000; transition: 0.3s; padding: 10px; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+        .close-filter-btn:hover { background: rgba(0,0,0,0.05); color: var(--accent); transform: scale(1.1); }
+
         .filter-group { margin-bottom: 25px; }
         .filter-group label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #888; margin-bottom: 8px; }
         .filter-group input[type="range"] { width: 100%; accent-color: var(--accent); }
@@ -129,7 +133,9 @@
 <button id="reset-view-btn" onclick="resetCamera()">Zurück zur Mitte</button>
 
 <div id="filter-sidebar">
+    <button class="close-filter-btn" onclick="toggleFilter()">✕</button>
     <h2 style="font-weight: 800; margin-top: 0;">Filter</h2>
+    
     <div class="filter-group">
         <label>Suche (Mehrere mit Leerzeichen)</label>
         <input type="text" id="f-search" placeholder="z.B. Kartoffeln Speck" oninput="applyFilters()">
@@ -249,7 +255,18 @@
         applyFilters();
 
         if (window.recipes.length > 0) {
-            resetCamera(true); // true = Start-Intro (weit rausgezoomt)
+            resetCamera(true);
+            
+            // NEU: Prüfen, ob die URL eine ID enthält (Direkt-Link zu einem Rezept)
+            const urlParams = new URLSearchParams(window.location.search);
+            const recipeId = urlParams.get('id');
+            if (recipeId) {
+                const recipeToOpen = window.recipes.find(r => r.id === recipeId);
+                if (recipeToOpen) {
+                    // Öffne das Rezept direkt beim Start, ohne URL nochmal zu verändern
+                    window.openDetail(recipeToOpen, false); 
+                }
+            }
         }
     }
 
@@ -283,7 +300,11 @@
             
             card.onpointerdown = () => card.setAttribute('data-drag', 'false');
             card.onpointermove = () => { if(isDragging) card.setAttribute('data-drag', 'true'); };
-            card.onclick = (e) => { if (card.getAttribute('data-drag') === 'false' && dragDist < 10) window.openDetail(r); };
+            card.onclick = (e) => { 
+                if (card.getAttribute('data-drag') === 'false' && dragDist < 10) {
+                    window.openDetail(r); 
+                }
+            };
             
             container.appendChild(card);
         });
@@ -293,7 +314,6 @@
 
     // --- KAMERA ZENTRIEREN ---
     window.resetCamera = function(isIntro = false) {
-        // Zähle nur die Karten, die aktuell durch den Filter sichtbar sind
         const visibleCards = document.querySelectorAll('.recipe-card:not(.hidden)').length;
         if (visibleCards === 0) return;
 
@@ -309,17 +329,17 @@
         targetCamX = centerX; 
         targetCamY = centerY;
         
-        if(isIntro) {
+        if(isIntro === true) {
             camX = centerX; 
             camY = centerY;
-            currentScale = 0.2; // Startet tief im Zoom
-            targetScale = 0.6;  // Fliegt auf diesen Zoom
+            currentScale = 0.2; 
+            targetScale = 0.6;  
         } else {
-            targetScale = 0.6; // Weicher Flug aus aktueller Position
+            targetScale = 0.6; 
         }
     }
 
-    // --- FILTER LOGIK (MIT MULTI-SEARCH & RESET) ---
+    // --- FILTER LOGIK ---
     window.toggleFilter = () => document.getElementById('filter-sidebar').classList.toggle('open');
     
     window.resetFilters = function() {
@@ -336,12 +356,11 @@
         document.getElementById('val-rating').innerText = "1★";
         
         applyFilters();
-        resetCamera(); // Bei Reset auch wieder zentrieren
+        resetCamera();
     }
 
     window.applyFilters = function() {
         const searchInput = document.getElementById('f-search').value.toLowerCase();
-        // Teilt den Such-String bei jedem Komma oder Leerzeichen auf (für Multi-Search)
         const searchTerms = searchInput.split(/[\s,]+/).filter(t => t.length > 0);
         
         const diff = document.getElementById('f-diff').value;
@@ -355,13 +374,10 @@
             const el = document.getElementById(`card-${r.id}`);
             if(!el) return;
 
-            // Fasse Name und alle Zutaten in einem großen Text zusammen
             const ingString = (r.zutaten || []).map(z => z.name).join(' ').toLowerCase();
             const searchableText = r.name.toLowerCase() + " " + ingString;
             
-            // Check: Ist JEDER Suchbegriff im Text vorhanden? (AND Logik)
             const matchSearch = searchTerms.every(term => searchableText.includes(term));
-            
             const matchDiff = diff === 'all' || parseInt(r.schwierigkeit) === parseInt(diff);
             const matchTime = parseInt(r.dauer || 0) <= maxTime;
             const matchProt = parseInt(r.protein || 0) >= minProt;
@@ -385,10 +401,21 @@
         });
     }
 
-    // --- DETAIL & RECHNER ---
-    window.openDetail = function(r) {
+    // --- DETAIL, URL-ROUTING & RECHNER ---
+    // Der Parameter updateUrl verhindert, dass wir beim Start-Laden eine Endlosschleife erzeugen
+    window.openDetail = function(r, updateUrl = true) {
         const overlay = document.getElementById('detail-overlay');
         const content = document.getElementById('detail-content');
+        
+        // NEU: Scroll-Position immer auf 0 (ganz oben) setzen beim Öffnen
+        overlay.scrollTop = 0;
+        
+        // NEU: URL ändern, ohne die Seite neu zu laden
+        if (updateUrl) {
+            const newUrl = window.location.pathname + '?id=' + r.id;
+            window.history.pushState({ id: r.id }, '', newUrl);
+        }
+
         let currentServings = r.basisPortionen || 2;
 
         window.renderDetailView = function(servings) {
@@ -439,6 +466,28 @@
         overlay.classList.add('active');
     }
 
+    // Hört auf den "Zurück"-Button im Browser
+    window.addEventListener('popstate', (event) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const recipeId = urlParams.get('id');
+        
+        if (recipeId) {
+            const r = window.recipes.find(rec => rec.id === recipeId);
+            if (r) window.openDetail(r, false);
+        } else {
+            window.closeOverlay('detail-overlay', false);
+        }
+    });
+
+    // NEU: Beim Schließen URL bereinigen
+    window.closeOverlay = function(id, updateUrl = true) {
+        document.getElementById(id).classList.remove('active');
+        if (id === 'detail-overlay' && updateUrl) {
+            // URL wieder auf die saubere Basis setzen (ohne ?id=...)
+            window.history.pushState({}, '', window.location.pathname);
+        }
+    }
+
     // --- CRUD: EDITOR, BILDER, LÖSCHEN ---
     window.openEditor = function() {
         document.getElementById('ed-title').innerText = "Neues Rezept";
@@ -455,7 +504,7 @@
         const r = window.recipes.find(rec => rec.id === id);
         if(!r) return;
         
-        closeOverlay('detail-overlay');
+        window.closeOverlay('detail-overlay', false);
         document.getElementById('ed-title').innerText = "Rezept bearbeiten";
         document.getElementById('ed-id').value = r.id;
         document.getElementById('ed-name').value = r.name || '';
@@ -485,7 +534,7 @@
     window.deleteRecipe = async function(id) {
         if(confirm("Rezept wirklich löschen?")) {
             await deleteDoc(doc(db, "recipes", id));
-            closeOverlay('detail-overlay');
+            window.closeOverlay('detail-overlay');
             window.loadRecipes();
         }
     }
@@ -555,7 +604,7 @@
             } else {
                 await addDoc(collection(db, "recipes"), data);
             }
-            closeOverlay('editor-overlay');
+            window.closeOverlay('editor-overlay');
             window.loadRecipes();
         } catch(e) {
             alert("Fehler: " + e.message);
@@ -563,8 +612,6 @@
             btn.innerText = "REZEPT SPEICHERN";
         }
     }
-
-    window.closeOverlay = (id) => document.getElementById(id).classList.remove('active');
 
     // --- PHYSICS ENGINE & TOUCHPAD ZOOM FIX ---
     let isDragging = false, startX, startY, scrollX, scrollY, dragDist = 0;
@@ -594,6 +641,9 @@
     window.addEventListener('wheel', (e) => {
         if(document.querySelector('.overlay.active') || document.getElementById('filter-sidebar').classList.contains('open')) return;
         
+        // Zoom nur ausführen, wenn man NICHT über dem Filter-Menü ist
+        if(e.target.closest('#filter-sidebar')) return;
+
         e.preventDefault(); 
         const zoomSpeed = e.ctrlKey ? 0.005 : 0.001;
         targetScale = Math.min(Math.max(0.15, targetScale - e.deltaY * zoomSpeed), 3);
@@ -611,7 +661,6 @@
         requestAnimationFrame(animate);
     }
 
-    // Beim Laden der Seite sicherstellen, dass alte Browser-Eingaben resettet werden
     window.resetFilters();
     window.loadRecipes();
     animate();

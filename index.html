@@ -195,6 +195,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+    // DEINE CONFIG
     const firebaseConfig = {
         apiKey: "AIzaSyD9K2SaIsFjH3rgdn3OlAJCXSTmp54Z7EU",
         authDomain: "recipes-eb373.firebaseapp.com",
@@ -228,26 +229,24 @@
         if (window.recipes.length > 0) {
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             
-            window.recipes.forEach(r => {
-                const x = parseFloat(r.xPos || 500);
-                const y = parseFloat(r.yPos || 500);
-                minX = Math.min(minX, x);
-                maxX = Math.max(maxX, x + 340); // 340px = Breite der Karte
-                minY = Math.min(minY, y);
-                maxY = Math.max(maxY, y + 450); // Geschätzte Höhe der Karte
+            window.recipes.forEach((r, index) => {
+                const posX = r.xPos !== undefined ? parseFloat(r.xPos) : (index % 4) * 400 + 100;
+                const posY = r.yPos !== undefined ? parseFloat(r.yPos) : Math.floor(index / 4) * 550 + 100;
+                
+                minX = Math.min(minX, posX);
+                maxX = Math.max(maxX, posX + 340);
+                minY = Math.min(minY, posY);
+                maxY = Math.max(maxY, posY + 450);
             });
 
-            // Errechne die exakte Mitte aller Karten
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2;
 
-            // Kamera sofort auf die Mitte der Kollektion setzen
             camX = centerX;
             camY = centerY;
             targetCamX = centerX;
             targetCamY = centerY;
             
-            // Start-Zoom-Effekt: Starte ganz klein (0.2) und gleite auf Normalgröße
             currentScale = 0.2; 
         }
     }
@@ -256,12 +255,17 @@
         const container = document.getElementById('canvas');
         container.innerHTML = '';
 
-        window.recipes.forEach(r => {
+        window.recipes.forEach((r, index) => {
             const card = document.createElement('div');
             card.className = 'recipe-card';
             card.id = `card-${r.id}`;
-            card.style.left = `${r.xPos || 500}px`;
-            card.style.top = `${r.yPos || 500}px`;
+            
+            // LOGIK-FIX: Wenn keine Position da ist, bau ein intelligentes Raster (4 Spalten)
+            const posX = r.xPos !== undefined ? parseFloat(r.xPos) : (index % 4) * 400 + 100;
+            const posY = r.yPos !== undefined ? parseFloat(r.yPos) : Math.floor(index / 4) * 550 + 100;
+
+            card.style.left = `${posX}px`;
+            card.style.top = `${posY}px`;
             
             const stars = "★".repeat(r.rating || 5) + "☆".repeat(5 - (r.rating || 5));
             const imgSrc = r.bildBase64 || 'https://images.unsplash.com/photo-1495195134817-a1a2807facx1?auto=format&fit=crop&q=80&w=800';
@@ -282,9 +286,12 @@
                 </div>
             `;
             
-            // Drag-Check, damit Klicks nicht beim Pannen ausgelöst werden
+            // Drag-Check, damit Klicks nicht beim Ziehen ausgelöst werden
             card.onpointerdown = () => card.setAttribute('data-drag', 'false');
-            card.onpointermove = () => card.setAttribute('data-drag', 'true');
+            card.onpointermove = (e) => {
+                // Ein kleiner Puffer, damit 1px Maus-Zittern nicht sofort als Drag gewertet wird
+                if(isDragging) card.setAttribute('data-drag', 'true');
+            };
             card.onclick = (e) => { if (card.getAttribute('data-drag') === 'false') window.openDetail(r); };
             
             container.appendChild(card);
@@ -433,7 +440,7 @@
         container.appendChild(div);
     }
 
-    // BILD KOMPRIMIERUNG (Browser-Side Magic)
+    // BILD KOMPRIMIERUNG
     window.handleImageUpload = function(event) {
         const file = event.target.files[0];
         if(!file) return;
@@ -451,7 +458,6 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
-                // Als WebP komprimieren (spart enorm Speicher in Firestore)
                 const base64 = canvas.toDataURL('image/webp', 0.7);
                 document.getElementById('ed-img-preview').src = base64;
                 document.getElementById('ed-img-preview').style.opacity = '1';
@@ -475,9 +481,9 @@
             if(name) zutaten.push({ menge: isNaN(menge)?0:menge, einheit, name });
         });
 
-        // Wo soll die Karte spawnen? Genau dort, wo die Kamera gerade hinschaut!
-        const spawnX = (window.innerWidth / 2) / currentScale + camX - 170;
-        const spawnY = (window.innerHeight / 2) / currentScale + camY - 200;
+        // Die Kamera-Koordinaten sind genau die Mitte. Wir ziehen nur die halbe Breite der Karte ab.
+        const spawnX = camX - 170; 
+        const spawnY = camY - 200;
 
         const data = {
             name: document.getElementById('ed-name').value || "Neues Rezept",
@@ -512,7 +518,7 @@
 
     window.closeOverlay = (id) => document.getElementById(id).classList.remove('active');
 
-    // --- PHYSICS ENGINE ---
+    // --- PHYSICS ENGINE & TOUCHPAD ZOOM FIX ---
     let isDragging = false, startX, startY, scrollX, scrollY;
     const vp = document.getElementById('viewport');
     
@@ -529,11 +535,16 @@
     
     window.onpointerup = () => isDragging = false;
     
-    // TargetScale nutzen für butterweichen Mausrad-Zoom!
-    window.onwheel = (e) => {
+    // Nativer Browser-Zoom (Mac Touchpad) unterdrücken und auf unsere Leinwand umleiten!
+    window.addEventListener('wheel', (e) => {
         if(document.querySelector('.overlay.active') || document.getElementById('filter-sidebar').classList.contains('open')) return;
-        targetScale = Math.min(Math.max(0.2, targetScale - e.deltaY * 0.001), 2);
-    };
+        
+        e.preventDefault(); // Blockiert das fiese native Browser-Zoomen
+        
+        // e.ctrlKey ist beim Mac Touchpad "Pinch-to-Zoom" in der Regel true.
+        const zoomSpeed = e.ctrlKey ? 0.005 : 0.001;
+        targetScale = Math.min(Math.max(0.15, targetScale - e.deltaY * zoomSpeed), 3);
+    }, { passive: false }); // WICHTIG: Erlaubt e.preventDefault() zu funktionieren
 
     function animate() {
         // Weiches Gleiten (Lerp) für Panning UND Zoomen

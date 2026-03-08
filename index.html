@@ -44,6 +44,16 @@
         .fab:hover { transform: translateY(-5px) scale(1.05); }
         .fab.dark:hover { background: var(--accent); transform: translateY(-5px) scale(1.05) rotate(90deg); }
 
+        /* ZURÜCK ZUR MITTE BUTTON */
+        #reset-view-btn {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            background: #000; color: #fff; padding: 14px 28px; border-radius: 40px;
+            font-size: 13px; font-weight: 700; cursor: pointer; z-index: 100;
+            transition: all 0.4s var(--ease); box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            border: none; letter-spacing: 1px; text-transform: uppercase;
+        }
+        #reset-view-btn:hover { background: var(--accent); transform: translateX(-50%) scale(1.05); }
+
         /* FILTER SIDEBAR */
         #filter-sidebar { position: fixed; top: 0; left: -400px; width: 350px; height: 100vh; background: rgba(255,255,255,0.85); backdrop-filter: blur(25px); border-right: 1px solid rgba(0,0,0,0.05); z-index: 900; padding: 140px 40px 40px; transition: 0.6s var(--ease); box-shadow: 20px 0 50px rgba(0,0,0,0.05); overflow-y: auto; }
         #filter-sidebar.open { left: 0; }
@@ -115,6 +125,8 @@
     <button class="fab" onclick="toggleFilter()" title="Filter">⚲</button>
     <button class="fab dark" onclick="openEditor()" title="Neues Rezept">+</button>
 </div>
+
+<button id="reset-view-btn" onclick="resetCamera()">Zurück zur Mitte</button>
 
 <div id="filter-sidebar">
     <h2 style="font-weight: 800; margin-top: 0;">Filter</h2>
@@ -237,20 +249,7 @@
         applyFilters();
 
         if (window.recipes.length > 0) {
-            const visibleCards = window.recipes.length;
-            const actualCols = Math.min(visibleCards, COLUMNS);
-            const actualRows = Math.ceil(visibleCards / COLUMNS);
-
-            const totalWidth = actualCols * CARD_WIDTH + Math.max(0, actualCols - 1) * GAP;
-            const totalHeight = actualRows * CARD_HEIGHT + Math.max(0, actualRows - 1) * GAP;
-
-            const centerX = 100 + (totalWidth / 2);
-            const centerY = 100 + (totalHeight / 2);
-
-            camX = centerX; camY = centerY;
-            targetCamX = centerX; targetCamY = centerY;
-            
-            currentScale = 0.2; 
+            resetCamera(true); // true = Start-Intro (weit rausgezoomt)
         }
     }
 
@@ -292,6 +291,34 @@
         applyFilters();
     }
 
+    // --- KAMERA ZENTRIEREN ---
+    window.resetCamera = function(isIntro = false) {
+        // Zähle nur die Karten, die aktuell durch den Filter sichtbar sind
+        const visibleCards = document.querySelectorAll('.recipe-card:not(.hidden)').length;
+        if (visibleCards === 0) return;
+
+        const actualCols = Math.min(visibleCards, COLUMNS);
+        const actualRows = Math.ceil(visibleCards / COLUMNS);
+
+        const totalWidth = actualCols * CARD_WIDTH + Math.max(0, actualCols - 1) * GAP;
+        const totalHeight = actualRows * CARD_HEIGHT + Math.max(0, actualRows - 1) * GAP;
+
+        const centerX = 100 + (totalWidth / 2);
+        const centerY = 100 + (totalHeight / 2);
+
+        targetCamX = centerX; 
+        targetCamY = centerY;
+        
+        if(isIntro) {
+            camX = centerX; 
+            camY = centerY;
+            currentScale = 0.2; // Startet tief im Zoom
+            targetScale = 0.6;  // Fliegt auf diesen Zoom
+        } else {
+            targetScale = 0.6; // Weicher Flug aus aktueller Position
+        }
+    }
+
     // --- FILTER LOGIK (MIT MULTI-SEARCH & RESET) ---
     window.toggleFilter = () => document.getElementById('filter-sidebar').classList.toggle('open');
     
@@ -309,6 +336,7 @@
         document.getElementById('val-rating').innerText = "1★";
         
         applyFilters();
+        resetCamera(); // Bei Reset auch wieder zentrieren
     }
 
     window.applyFilters = function() {

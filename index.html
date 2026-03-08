@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gourmet Grid | Performance Edition</title>
+    <title>Gourmet Grid | Perfect Raster</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;600;800&display=swap" rel="stylesheet">
 
@@ -53,16 +53,16 @@
         .filter-group input[type="text"], .filter-group select { width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid #ddd; background: transparent; font-size: 14px; font-weight: 600; }
         .val-badge { color: var(--accent); }
 
-        /* RECIPE CARDS (GPU Beschleunigt) */
+        /* RECIPE CARDS (Strict Grid Design) */
         .recipe-card { 
             position: absolute; 
-            top: 0; left: 0; /* Positionierung nur noch über transform */
+            top: 0; left: 0; 
             width: 340px; 
+            height: 460px; /* Feste Höhe, damit das Raster niemals bricht */
             background: #fff; 
             border-radius: var(--card-radius); 
-            /* Nutze CSS Variablen für Position und Scale, um Repaints zu vermeiden */
             transform: translate3d(var(--x, 0), var(--y, 0), 0) scale(var(--s, 1));
-            transition: transform 0.8s var(--ease), opacity 0.5s ease, box-shadow 0.6s var(--ease); 
+            transition: transform 0.8s var(--ease), opacity 0.4s, box-shadow 0.4s; 
             box-shadow: 0 20px 50px rgba(0,0,0,0.05); 
             cursor: pointer; 
             overflow: hidden; 
@@ -71,12 +71,14 @@
         .recipe-card.hidden { opacity: 0; pointer-events: none; transform: translate3d(var(--x, 0), var(--y, 0), 0) scale(0.8); }
         .recipe-card:hover { --s: 1.03; z-index: 10; box-shadow: 0 30px 60px rgba(0,0,0,0.15); }
         
-        .recipe-card img { width: 100%; height: 260px; object-fit: cover; }
+        /* WICHTIG: Das verhindert, dass der Browser Bilder "draggen" will */
+        .recipe-card img { width: 100%; height: 240px; object-fit: cover; -webkit-user-drag: none; user-select: none; }
+        
         .card-info { padding: 25px; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .card-cat { color: var(--accent); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
         .card-rating { font-size: 14px; color: #ffcc00; }
-        .card-title { font-size: 24px; font-weight: 800; margin: 0 0 15px 0; letter-spacing: -1px; line-height: 1.1; }
+        .card-title { font-size: 24px; font-weight: 800; margin: 0 0 15px 0; letter-spacing: -1px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .card-meta { display: flex; justify-content: space-between; border-top: 1px solid #f0f0f0; padding-top: 15px; font-size: 12px; color: #888; }
         .card-meta b { display: block; font-size: 15px; color: #000; margin-top: 2px; }
 
@@ -226,43 +228,52 @@
     // Globale Kameravariablen
     let camX = window.innerWidth/2, camY = window.innerHeight/2;
     let targetCamX = window.innerWidth/2, targetCamY = window.innerHeight/2;
-    let currentScale = 0.5;
-    let targetScale = 0.6;
+    let currentScale = 0.5, targetScale = 0.6;
+    
+    // Raster-Konstanten
+    const COLUMNS = 4;
+    const CARD_WIDTH = 340;
+    const CARD_HEIGHT = 460;
+    const GAP = 60;
 
-    // --- DATEN LADEN & AUTO-CENTERING ---
+    // --- DATEN LADEN & INITIALES RENDERN ---
     window.loadRecipes = async function() {
         const querySnapshot = await getDocs(collection(db, "recipes"));
         window.recipes = [];
         querySnapshot.forEach((doc) => window.recipes.push({ id: doc.id, ...doc.data() }));
         
-        renderCanvas(); // Rendert die Karten
+        // Rendere DOM-Elemente
+        renderCanvas(); 
+        
+        // Sortiere sie ins Raster
+        applyFilters();
 
+        // AUTO-CENTERING AUF DAS BERECHNETE RASTER
         if (window.recipes.length > 0) {
-            // Berechne die absolute Mitte des berechneten Grids
-            const columns = Math.min(window.recipes.length, 4);
-            const rows = Math.ceil(window.recipes.length / 4);
-            
-            const totalWidth = columns * 400; // 340px Karte + 60px Abstand
-            const totalHeight = rows * 550;   // 450px Karte + 100px Abstand
-            
-            const centerX = 100 + (totalWidth / 2);
-            const centerY = 100 + (totalHeight / 2);
+            const visibleCards = window.recipes.length;
+            const actualCols = Math.min(visibleCards, COLUMNS);
+            const actualRows = Math.ceil(visibleCards / COLUMNS);
 
-            camX = centerX;
-            camY = centerY;
-            targetCamX = centerX;
-            targetCamY = centerY;
+            const totalWidth = actualCols * CARD_WIDTH + Math.max(0, actualCols - 1) * GAP;
+            const totalHeight = actualRows * CARD_HEIGHT + Math.max(0, actualRows - 1) * GAP;
+
+            // Mitte des gesamten Rasters
+            const centerX = totalWidth / 2;
+            const centerY = totalHeight / 2;
+
+            camX = centerX; camY = centerY;
+            targetCamX = centerX; targetCamY = centerY;
             
+            // Start-Zoom-Effekt
             currentScale = 0.2; 
         }
     }
 
-    // --- HTML RENDER FUNKTION ---
     function renderCanvas() {
         const container = document.getElementById('canvas');
         container.innerHTML = '';
 
-        window.recipes.forEach(r => {
+        window.recipes.forEach((r) => {
             const card = document.createElement('div');
             card.className = 'recipe-card';
             card.id = `card-${r.id}`;
@@ -271,7 +282,7 @@
             const imgSrc = r.bildBase64 || 'https://images.unsplash.com/photo-1495195134817-a1a2807facx1?auto=format&fit=crop&q=80&w=800';
 
             card.innerHTML = `
-                <img src="${imgSrc}" loading="lazy">
+                <img src="${imgSrc}" loading="lazy" draggable="false">
                 <div class="card-info">
                     <div class="card-header">
                         <span class="card-cat">${r.kategorie || 'Neu'}</span>
@@ -286,19 +297,18 @@
                 </div>
             `;
             
-            // Drag-Check
-            card.onpointerdown = () => card.setAttribute('data-drag', 'false');
-            card.onpointermove = () => { if(isDragging) card.setAttribute('data-drag', 'true'); };
-            card.onclick = (e) => { if (card.getAttribute('data-drag') === 'false') window.openDetail(r); };
+            // Smarte Klick vs. Drag Erkennung
+            card.onclick = (e) => {
+                if (dragDist < 10) { // Wenn die Maus weniger als 10px bewegt wurde, ist es ein Klick!
+                    window.openDetail(r);
+                }
+            };
             
             container.appendChild(card);
         });
-
-        // WICHTIG: Nach dem DOM-Render das Grid direkt berechnen!
-        applyFilters();
     }
 
-    // --- INTELLIGENTES FILTERN & RASTER (DYNAMIC MASONRY) ---
+    // --- STRICT GRID & FILTER ---
     window.toggleFilter = () => document.getElementById('filter-sidebar').classList.toggle('open');
     
     window.applyFilters = function() {
@@ -308,7 +318,7 @@
         const minProt = parseInt(document.getElementById('f-prot').value);
         const minRating = parseInt(document.getElementById('f-rating').value);
 
-        let visibleIndex = 0; // Zähler für die sichtbaren Karten
+        let visibleIndex = 0; // Dieser Zähler baut das lückenlose Raster auf
 
         window.recipes.forEach(r => {
             const el = document.getElementById(`card-${r.id}`);
@@ -324,12 +334,14 @@
             if (matchSearch && matchDiff && matchTime && matchProt && matchRating) {
                 el.classList.remove('hidden');
                 
-                // BERECHNE POSITION AUTOMATISCH (4 Spalten)
-                const cols = 4;
-                const posX = (visibleIndex % cols) * 400 + 100;
-                const posY = Math.floor(visibleIndex / cols) * 550 + 100;
+                // STRENGES RASTER BERECHNEN (Ignoriert alte Firebase Positionen komplett)
+                const col = visibleIndex % COLUMNS;
+                const row = Math.floor(visibleIndex / COLUMNS);
 
-                // Übergebe Koordinaten an CSS (GPU animiert sie sanft dorthin!)
+                const posX = col * (CARD_WIDTH + GAP);
+                const posY = row * (CARD_HEIGHT + GAP);
+
+                // Weiche CSS-Animation zur neuen Position
                 el.style.setProperty('--x', `${posX}px`);
                 el.style.setProperty('--y', `${posY}px`);
                 
@@ -490,7 +502,7 @@
             if(name) zutaten.push({ menge: isNaN(menge)?0:menge, einheit, name });
         });
 
-        // HINWEIS: xPos und yPos werden nicht mehr gespeichert, das Grid generiert sich immer automatisch!
+        // WICHTIG: Kein Speichern von xPos / yPos mehr. Das Grid macht alles automatisch.
         const data = {
             name: document.getElementById('ed-name').value || "Neues Rezept",
             kategorie: document.getElementById('ed-cat').value,
@@ -523,21 +535,31 @@
     window.closeOverlay = (id) => document.getElementById(id).classList.remove('active');
 
     // --- PHYSICS ENGINE & TOUCHPAD ZOOM FIX ---
-    let isDragging = false, startX, startY, scrollX, scrollY;
+    let isDragging = false, startX, startY, scrollX, scrollY, dragDist = 0;
     const vp = document.getElementById('viewport');
     
-    vp.onpointerdown = (e) => {
-        if(e.target.closest('.recipe-card')) return; 
-        isDragging = true; startX = e.pageX; startY = e.pageY; scrollX = targetCamX; scrollY = targetCamY;
-    };
+    vp.addEventListener('pointerdown', (e) => {
+        // Starte Drag überall, auch auf Karten!
+        isDragging = true; 
+        dragDist = 0; // Reset der Drag-Distanz
+        startX = e.pageX; 
+        startY = e.pageY; 
+        scrollX = targetCamX; 
+        scrollY = targetCamY;
+    });
     
-    window.onpointermove = (e) => {
+    window.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
-        targetCamX = scrollX - (e.pageX - startX) / currentScale; 
-        targetCamY = scrollY - (e.pageY - startY) / currentScale;
-    };
+        
+        const dx = e.pageX - startX;
+        const dy = e.pageY - startY;
+        dragDist += Math.abs(dx) + Math.abs(dy); // Addiere Bewegung
+        
+        targetCamX = scrollX - dx / currentScale; 
+        targetCamY = scrollY - dy / currentScale;
+    });
     
-    window.onpointerup = () => isDragging = false;
+    window.addEventListener('pointerup', () => isDragging = false);
     
     // Nativer Browser-Zoom blockieren und durch Canvas-Zoom ersetzen
     window.addEventListener('wheel', (e) => {

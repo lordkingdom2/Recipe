@@ -20,19 +20,22 @@
         * { box-sizing: border-box; font-family: 'Inter Tight', sans-serif; -webkit-font-smoothing: antialiased; outline: none; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); }
 
+        /* GOOGLE LOGIN OVERLAY */
+        #login-overlay {
+            position: fixed; inset: 0; background: var(--bg); z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.8s var(--ease);
+        }
+        .login-box { background: #fff; padding: 60px; border-radius: 30px; box-shadow: 0 40px 100px rgba(0,0,0,0.08); text-align: center; }
+        .login-box h1 { font-weight: 800; font-size: 42px; margin: 0 0 10px 0; letter-spacing: -2px; }
+        .login-box p { color: #888; margin-bottom: 40px; }
+        .btn-google { background: #000; color: #fff; border: none; padding: 18px 40px; border-radius: 50px; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .btn-google:hover { background: var(--accent); transform: scale(1.05); }
+
         /* CANVAS & PHYSICS */
-        #viewport { 
-            width: 100vw; height: 100vh; position: relative; overflow: hidden; 
-            cursor: grab; touch-action: none; 
-        }
+        #viewport { width: 100vw; height: 100vh; position: relative; overflow: hidden; cursor: grab; touch-action: none; }
         #viewport:active { cursor: grabbing; }
-        
-        #canvas { 
-            position: absolute; top: 0; left: 0; width: 10000px; height: 10000px; 
-            transform-origin: 0 0; will-change: transform; 
-            background-image: radial-gradient(var(--grid) 3px, transparent 3px); 
-            background-size: 60px 60px; 
-        }
+        #canvas { position: absolute; top: 0; left: 0; width: 10000px; height: 10000px; transform-origin: 0 0; will-change: transform; background-image: radial-gradient(var(--grid) 3px, transparent 3px); background-size: 60px 60px; }
 
         /* UI ELEMENTS */
         header { position: fixed; top: 40px; left: 40px; z-index: 100; pointer-events: none; }
@@ -43,40 +46,16 @@
         .fab.dark { background: #000; color: #fff; font-size: 32px; font-weight: 300; }
         .fab:hover { transform: translateY(-5px) scale(1.05); }
         .fab.dark:hover { background: var(--accent); transform: translateY(-5px) scale(1.05) rotate(90deg); }
+        
+        .btn-logout { position: fixed; bottom: 40px; left: 40px; background: #fff; border: 1px solid #ddd; padding: 10px 20px; border-radius: 20px; font-weight: 700; font-size: 12px; cursor: pointer; z-index: 100; transition: 0.3s; }
+        .btn-logout:hover { background: #eee; }
 
-        /* ZURÜCK ZUR MITTE BUTTON */
-        #reset-view-btn {
-            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-            background: #000; color: #fff; padding: 14px 28px; border-radius: 40px;
-            font-size: 13px; font-weight: 700; cursor: pointer; z-index: 100;
-            transition: all 0.4s var(--ease); box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-            border: none; letter-spacing: 1px; text-transform: uppercase;
-        }
+        /* ZURÜCK ZUR MITTE */
+        #reset-view-btn { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 14px 28px; border-radius: 40px; font-size: 13px; font-weight: 700; cursor: pointer; z-index: 100; transition: all 0.4s var(--ease); box-shadow: 0 15px 40px rgba(0,0,0,0.2); border: none; text-transform: uppercase; }
         #reset-view-btn:hover { background: var(--accent); transform: translateX(-50%) scale(1.05); }
 
-        /* FILTER SIDEBAR */
-        #filter-sidebar { position: fixed; top: 0; left: -400px; width: 350px; height: 100vh; background: rgba(255,255,255,0.85); backdrop-filter: blur(25px); border-right: 1px solid rgba(0,0,0,0.05); z-index: 900; padding: 140px 40px 40px; transition: 0.6s var(--ease); box-shadow: 20px 0 50px rgba(0,0,0,0.05); overflow-y: auto; }
-        #filter-sidebar.open { left: 0; }
-        
-        .close-filter-btn { position: absolute; top: 40px; right: 40px; background: none; border: none; font-size: 24px; font-weight: 800; cursor: pointer; color: #000; transition: 0.3s; padding: 10px; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
-        .close-filter-btn:hover { background: rgba(0,0,0,0.05); color: var(--accent); transform: scale(1.1); }
-
-        .filter-group { margin-bottom: 25px; }
-        .filter-group label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #888; margin-bottom: 8px; }
-        .filter-group input[type="range"] { width: 100%; accent-color: var(--accent); }
-        .filter-group input[type="text"], .filter-group select { width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid #ddd; background: transparent; font-size: 14px; font-weight: 600; }
-        .val-badge { color: var(--accent); }
-        .btn-reset { width: 100%; padding: 12px; background: #eee; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn-reset:hover { background: #e0e0e0; }
-
         /* RECIPE CARDS */
-        .recipe-card { 
-            position: absolute; top: 0; left: 0; width: 340px; height: 460px; 
-            background: #fff; border-radius: var(--card-radius); 
-            transform: translate3d(var(--x, 0), var(--y, 0), 0) scale(var(--s, 1));
-            transition: transform 0.8s var(--ease), opacity 0.4s, box-shadow 0.4s; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.05); cursor: pointer; overflow: hidden; will-change: transform, opacity;
-        }
+        .recipe-card { position: absolute; top: 0; left: 0; width: 340px; height: 460px; background: #fff; border-radius: var(--card-radius); transform: translate3d(var(--x, 0), var(--y, 0), 0) scale(var(--s, 1)); transition: transform 0.8s var(--ease), opacity 0.4s, box-shadow 0.4s; box-shadow: 0 20px 50px rgba(0,0,0,0.05); cursor: pointer; overflow: hidden; will-change: transform, opacity; }
         .recipe-card.hidden { opacity: 0; pointer-events: none; transform: translate3d(var(--x, 0), var(--y, 0), 0) scale(0.8); }
         .recipe-card:hover { --s: 1.03; z-index: 10; box-shadow: 0 30px 60px rgba(0,0,0,0.15); }
         .recipe-card img { width: 100%; height: 240px; object-fit: cover; -webkit-user-drag: none; user-select: none; }
@@ -96,71 +75,63 @@
         .overlay-content { max-width: 1000px; margin: 0 auto; padding: 120px 40px; }
 
         /* DETAIL VIEW */
-        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+        .detail-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 80px; align-items: start; }
         .action-row { display: flex; gap: 10px; margin-top: 30px; }
         .btn-edit, .btn-delete { padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; }
         .btn-edit { background: #eee; color: #000; } .btn-edit:hover { background: #ddd; }
         .btn-delete { background: #ffebee; color: #c62828; } .btn-delete:hover { background: #ffcdd2; }
-        .servings-box { background: #f9f9f9; padding: 25px; border-radius: var(--card-radius); margin: 30px 0; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+        .servings-box { background: #f9f9f9; padding: 25px; border-radius: var(--card-radius); margin: 30px 0; border: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;}
         .servings-input { font-size: 32px; font-weight: 800; width: 60px; border: none; background: transparent; border-bottom: 2px solid #000; border-radius: 0; text-align: center; }
+        
+        .nutrition-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px; }
+        .nut-box { background: #fff; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
+        .nut-box span { display: block; font-size: 11px; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 5px;}
+        .nut-box b { font-size: 20px; color: #000; }
+
+        .micro-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        .micro-tag { background: #e8f0fe; color: #1967d2; padding: 8px 15px; border-radius: 50px; font-size: 13px; font-weight: 700; }
 
         /* EDITOR FORM */
+        .ai-import-box { background: #f0f4f8; border: 1px solid #d1e1f0; padding: 25px; border-radius: var(--card-radius); margin-bottom: 40px; }
         .ed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .ed-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
         .form-group { margin-bottom: 25px; }
         .form-group label { display: block; font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; color: #888; }
         input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; background: #fafafa; transition: 0.3s; }
         input:focus, textarea:focus { border-color: #000; background: #fff; }
+        
         .image-upload-wrapper { position: relative; width: 100%; height: 200px; border: 2px dashed #ddd; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; background: #fafafa; }
         .image-upload-wrapper img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 0.3s; }
-        .image-upload-wrapper span { font-weight: 700; color: #888; }
         
-        .ing-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .ing-row input.amount { flex: 1; } .ing-row input.unit { flex: 1; } .ing-row input.name { flex: 3; }
+        .ing-row, .micro-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .ing-row input.amount, .micro-row input.amount { flex: 1; } 
+        .ing-row input.unit, .micro-row input.unit { flex: 1; } 
+        .ing-row input.name, .micro-row input.name { flex: 3; }
         
         .btn-primary { background: #000; color: #fff; border: none; padding: 18px 30px; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.3s; width: 100%; margin-top: 20px; }
         .btn-primary:hover { background: var(--accent); }
+        .btn-outline { background: #fff; color: #000; border: 2px solid #000; padding: 12px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; }
+        .btn-outline:hover { background: #000; color: #fff; }
     </style>
 </head>
 <body>
 
+<div id="login-overlay">
+    <div class="login-box">
+        <h1>REZEPTE</h1>
+        <p>Gourmet Grid Archiv</p>
+        <button class="btn-google" onclick="signIn()">Mit Google anmelden</button>
+    </div>
+</div>
+
 <header><h1>REZEPTE</h1></header>
 
 <div class="controls">
-    <button class="fab" onclick="toggleFilter()" title="Filter">⚲</button>
     <button class="fab dark" onclick="openEditor()" title="Neues Rezept">+</button>
 </div>
 
 <button id="reset-view-btn" onclick="resetCamera()">Zurück zur Mitte</button>
-
-<div id="filter-sidebar">
-    <button class="close-filter-btn" onclick="toggleFilter()">✕</button>
-    <h2 style="font-weight: 800; margin-top: 0;">Filter</h2>
-    
-    <div class="filter-group">
-        <label>Suche (Mehrere mit Leerzeichen)</label>
-        <input type="text" id="f-search" placeholder="z.B. Kartoffeln Speck" oninput="applyFilters()">
-    </div>
-    <div class="filter-group">
-        <label>Schwierigkeit</label>
-        <select id="f-diff" onchange="applyFilters()">
-            <option value="all">Alle</option><option value="1">Leicht</option><option value="2">Mittel</option><option value="3">Schwer</option>
-        </select>
-    </div>
-    <div class="filter-group">
-        <label>Max Dauer <span class="val-badge" id="val-time">240m</span></label>
-        <input type="range" id="f-time" min="10" max="240" step="10" value="240" oninput="document.getElementById('val-time').innerText = this.value+'m'; applyFilters()">
-    </div>
-    <div class="filter-group">
-        <label>Min Protein <span class="val-badge" id="val-prot">0g</span></label>
-        <input type="range" id="f-prot" min="0" max="100" step="5" value="0" oninput="document.getElementById('val-prot').innerText = this.value+'g'; applyFilters()">
-    </div>
-    <div class="filter-group">
-        <label>Min Rating <span class="val-badge" id="val-rating">1★</span></label>
-        <input type="range" id="f-rating" min="1" max="5" step="1" value="1" oninput="document.getElementById('val-rating').innerText = this.value+'★'; applyFilters()">
-    </div>
-    
-    <button class="btn-reset" onclick="resetFilters()">Filter zurücksetzen</button>
-</div>
+<button class="btn-logout" onclick="logoutApp()">Abmelden</button>
 
 <div id="viewport"><div id="canvas"></div></div>
 
@@ -172,7 +143,17 @@
 <div id="editor-overlay" class="overlay">
     <button class="close-btn" onclick="closeOverlay('editor-overlay')">ABBRECHEN</button>
     <div class="overlay-content">
-        <h1 style="font-size: 48px; margin-bottom: 40px; letter-spacing: -2px;" id="ed-title">Neues Rezept</h1>
+        <h1 style="font-size: 48px; margin-bottom: 20px; letter-spacing: -2px;" id="ed-title">Neues Rezept</h1>
+        
+        <div class="ai-import-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <label style="margin:0; font-size:16px; color:#000;">KI Auto-Fill</label>
+                <button class="btn-outline" onclick="copyPrompt()">1. KI-Prompt kopieren</button>
+            </div>
+            <textarea id="ai-json-input" rows="4" placeholder="2. Füge das fertige JSON von Gemini hier ein..."></textarea>
+            <button class="btn-primary" style="margin-top: 10px; width: auto;" onclick="applyAIJson()">3. Daten anwenden</button>
+        </div>
+
         <input type="hidden" id="ed-id">
         
         <div class="ed-grid">
@@ -191,26 +172,36 @@
             </div>
         </div>
 
-        <div class="ed-grid">
+        <div class="ed-grid-4">
             <div class="form-group"><label>Dauer (Min)</label><input type="number" id="ed-time"></div>
             <div class="form-group"><label>Schwierigkeit (1-3)</label><input type="number" id="ed-diff" min="1" max="3" value="1"></div>
             <div class="form-group"><label>Sterne (1-5)</label><input type="number" id="ed-rating" min="1" max="5" value="5"></div>
             <div class="form-group"><label>Basis-Portionen</label><input type="number" id="ed-servings" value="2"></div>
         </div>
         
-        <div class="ed-grid">
-            <div class="form-group"><label>Kalorien (pro Port.)</label><input type="number" id="ed-cal"></div>
+        <h3 style="margin-top: 20px;">Makronährstoffe (pro Portion)</h3>
+        <div class="ed-grid-4">
+            <div class="form-group"><label>Kalorien (kcal)</label><input type="number" id="ed-cal"></div>
             <div class="form-group"><label>Protein (g)</label><input type="number" id="ed-prot"></div>
+            <div class="form-group"><label>Kohlenhydrate (g)</label><input type="number" id="ed-carbs"></div>
+            <div class="form-group"><label>Fett (g)</label><input type="number" id="ed-fat"></div>
+        </div>
+
+        <div class="ed-grid">
+            <div class="form-group">
+                <label>Zutaten (Menge | Einheit | Name)</label>
+                <div id="ed-ingredients"></div>
+                <button class="btn-edit" style="width:100%; margin-top:10px;" onclick="addIngredientRow()">+ Zutat</button>
+            </div>
+            <div class="form-group">
+                <label>Mikronährstoffe (Omega 3, Zink...)</label>
+                <div id="ed-micros"></div>
+                <button class="btn-edit" style="width:100%; margin-top:10px;" onclick="addMicroRow()">+ Mikronährstoff</button>
+            </div>
         </div>
 
         <div class="form-group">
-            <label>Zutaten (Menge | Einheit | Name)</label>
-            <div id="ed-ingredients"></div>
-            <button class="btn-edit" style="width:100%; margin-top:10px;" onclick="addIngredientRow()">+ Zutat hinzufügen</button>
-        </div>
-
-        <div class="form-group">
-            <label>Zubereitung</label>
+            <label>Zubereitung (HTML Tags wie &lt;b&gt; erlaubt)</label>
             <textarea id="ed-instructions" rows="8"></textarea>
         </div>
 
@@ -221,6 +212,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyD9K2SaIsFjH3rgdn3OlAJCXSTmp54Z7EU",
@@ -233,39 +225,100 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
     window.recipes = [];
-    
     let camX = window.innerWidth/2, camY = window.innerHeight/2;
     let targetCamX = window.innerWidth/2, targetCamY = window.innerHeight/2;
     let currentScale = 0.5, targetScale = 0.6;
     
-    const COLUMNS = 4;
-    const CARD_WIDTH = 340;
-    const CARD_HEIGHT = 460;
-    const GAP = 60;
+    const COLUMNS = 4, CARD_WIDTH = 340, CARD_HEIGHT = 460, GAP = 60;
 
-    // --- DATEN LADEN & INITIALES RENDERN ---
+    // --- AUTHENTIFIZIERUNG ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('login-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('login-overlay').style.display = 'none', 800);
+            window.loadRecipes();
+        } else {
+            document.getElementById('login-overlay').style.display = 'flex';
+            setTimeout(() => document.getElementById('login-overlay').style.opacity = '1', 50);
+        }
+    });
+
+    window.signIn = () => signInWithPopup(auth, provider).catch(e => alert("Login Fehler: " + e.message));
+    window.logoutApp = () => signOut(auth).then(() => window.location.reload());
+
+    // --- KI PROMPT & IMPORT ---
+    window.copyPrompt = function() {
+        const prompt = `Du bist ein Rezept-Experte. Konvertiere mein folgendes Rezept in dieses exakte JSON-Format. Schätze realistische Mikronährstoffe (Zink, Biotin, Omega 3, Vitamin C etc.) und fehlende Makros ab. Erlaube wichtigen Text in der Anleitung mit <b>fett</b> zu markieren.
+Struktur:
+{
+  "name": "Rezeptname",
+  "kategorie": "Kategorie",
+  "dauer": 30,
+  "schwierigkeit": 2,
+  "rating": 5,
+  "basisPortionen": 2,
+  "macros": { "kalorien": 500, "protein": 30, "kohlenhydrate": 40, "fett": 20 },
+  "micros": [ { "name": "Omega 3", "menge": 1.5, "einheit": "g" }, { "name": "Zink", "menge": 5, "einheit": "mg" } ],
+  "zutaten": [ { "menge": 200, "einheit": "g", "name": "Beispiel" } ],
+  "anleitung": "1. <b>Schritt 1:</b> Tun Sie dies.<br>2. Dann das."
+}`;
+        navigator.clipboard.writeText(prompt);
+        alert("Prompt in die Zwischenablage kopiert! Schicke ihn jetzt zusammen mit deinem Rezept an eine KI.");
+    }
+
+    window.applyAIJson = function() {
+        try {
+            let text = document.getElementById('ai-json-input').value;
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const data = JSON.parse(text);
+
+            document.getElementById('ed-name').value = data.name || '';
+            document.getElementById('ed-cat').value = data.kategorie || '';
+            document.getElementById('ed-time').value = data.dauer || '';
+            document.getElementById('ed-diff').value = data.schwierigkeit || 1;
+            document.getElementById('ed-rating').value = data.rating || 5;
+            document.getElementById('ed-servings').value = data.basisPortionen || 2;
+            
+            if(data.macros) {
+                document.getElementById('ed-cal').value = data.macros.kalorien || '';
+                document.getElementById('ed-prot').value = data.macros.protein || '';
+                document.getElementById('ed-carbs').value = data.macros.kohlenhydrate || '';
+                document.getElementById('ed-fat').value = data.macros.fett || '';
+            }
+
+            document.getElementById('ed-instructions').value = data.anleitung || '';
+
+            document.getElementById('ed-ingredients').innerHTML = '';
+            (data.zutaten || []).forEach(z => window.addIngredientRow(z.menge, z.einheit, z.name));
+
+            document.getElementById('ed-micros').innerHTML = '';
+            (data.micros || []).forEach(z => window.addMicroRow(z.menge, z.einheit, z.name));
+
+            alert("Daten erfolgreich angewendet! Bild nicht vergessen.");
+        } catch(e) {
+            alert("Ungültiges JSON Format. Hast du den kompletten Text der KI kopiert?");
+        }
+    }
+
+    // --- DATEN LADEN & RENDERN ---
     window.loadRecipes = async function() {
         const querySnapshot = await getDocs(collection(db, "recipes"));
         window.recipes = [];
         querySnapshot.forEach((doc) => window.recipes.push({ id: doc.id, ...doc.data() }));
         
         renderCanvas(); 
-        applyFilters();
-
+        
         if (window.recipes.length > 0) {
             resetCamera(true);
-            
-            // NEU: Prüfen, ob die URL eine ID enthält (Direkt-Link zu einem Rezept)
             const urlParams = new URLSearchParams(window.location.search);
             const recipeId = urlParams.get('id');
             if (recipeId) {
                 const recipeToOpen = window.recipes.find(r => r.id === recipeId);
-                if (recipeToOpen) {
-                    // Öffne das Rezept direkt beim Start, ohne URL nochmal zu verändern
-                    window.openDetail(recipeToOpen, false); 
-                }
+                if (recipeToOpen) window.openDetail(recipeToOpen, false); 
             }
         }
     }
@@ -274,13 +327,23 @@
         const container = document.getElementById('canvas');
         container.innerHTML = '';
 
-        window.recipes.forEach((r) => {
+        window.recipes.forEach((r, index) => {
             const card = document.createElement('div');
             card.className = 'recipe-card';
             card.id = `card-${r.id}`;
             
+            // Grid Berechnung
+            const col = index % COLUMNS;
+            const row = Math.floor(index / COLUMNS);
+            card.style.setProperty('--x', `${col * (CARD_WIDTH + GAP) + 100}px`);
+            card.style.setProperty('--y', `${row * (CARD_HEIGHT + GAP) + 100}px`);
+            
             const stars = "★".repeat(r.rating || 5) + "☆".repeat(5 - (r.rating || 5));
             const imgSrc = r.bildBase64 || 'https://images.unsplash.com/photo-1495195134817-a1a2807facx1?auto=format&fit=crop&q=80&w=800';
+
+            // Abwärtskompatibel für alte Daten ohne Macros
+            const prot = r.macros?.protein || r.protein || 0;
+            const cal = r.macros?.kalorien || r.kalorien || 0;
 
             card.innerHTML = `
                 <img src="${imgSrc}" loading="lazy" draggable="false">
@@ -292,7 +355,7 @@
                     <h2 class="card-title">${r.name}</h2>
                     <div class="card-meta">
                         <div>Dauer<b>${r.dauer || 0}m</b></div>
-                        <div>Protein<b>${r.protein || 0}g</b></div>
+                        <div>Protein<b>${prot}g</b></div>
                         <div>Level<b>${r.schwierigkeit || 1}/3</b></div>
                     </div>
                 </div>
@@ -300,134 +363,62 @@
             
             card.onpointerdown = () => card.setAttribute('data-drag', 'false');
             card.onpointermove = () => { if(isDragging) card.setAttribute('data-drag', 'true'); };
-            card.onclick = (e) => { 
-                if (card.getAttribute('data-drag') === 'false' && dragDist < 10) {
-                    window.openDetail(r); 
-                }
-            };
+            card.onclick = () => { if (card.getAttribute('data-drag') === 'false' && dragDist < 10) window.openDetail(r); };
             
             container.appendChild(card);
         });
-
-        applyFilters();
     }
 
-    // --- KAMERA ZENTRIEREN ---
     window.resetCamera = function(isIntro = false) {
-        const visibleCards = document.querySelectorAll('.recipe-card:not(.hidden)').length;
+        const visibleCards = window.recipes.length;
         if (visibleCards === 0) return;
-
         const actualCols = Math.min(visibleCards, COLUMNS);
         const actualRows = Math.ceil(visibleCards / COLUMNS);
-
         const totalWidth = actualCols * CARD_WIDTH + Math.max(0, actualCols - 1) * GAP;
         const totalHeight = actualRows * CARD_HEIGHT + Math.max(0, actualRows - 1) * GAP;
 
         const centerX = 100 + (totalWidth / 2);
         const centerY = 100 + (totalHeight / 2);
 
-        targetCamX = centerX; 
-        targetCamY = centerY;
-        
-        if(isIntro === true) {
-            camX = centerX; 
-            camY = centerY;
-            currentScale = 0.2; 
-            targetScale = 0.6;  
-        } else {
-            targetScale = 0.6; 
-        }
+        targetCamX = centerX; targetCamY = centerY;
+        if(isIntro) { camX = centerX; camY = centerY; currentScale = 0.2; targetScale = 0.6; } 
+        else { targetScale = 0.6; }
     }
 
-    // --- FILTER LOGIK ---
-    window.toggleFilter = () => document.getElementById('filter-sidebar').classList.toggle('open');
-    
-    window.resetFilters = function() {
-        document.getElementById('f-search').value = "";
-        document.getElementById('f-diff').value = "all";
-        
-        document.getElementById('f-time').value = 240;
-        document.getElementById('val-time').innerText = "240m";
-        
-        document.getElementById('f-prot').value = 0;
-        document.getElementById('val-prot').innerText = "0g";
-        
-        document.getElementById('f-rating').value = 1;
-        document.getElementById('val-rating').innerText = "1★";
-        
-        applyFilters();
-        resetCamera();
-    }
-
-    window.applyFilters = function() {
-        const searchInput = document.getElementById('f-search').value.toLowerCase();
-        const searchTerms = searchInput.split(/[\s,]+/).filter(t => t.length > 0);
-        
-        const diff = document.getElementById('f-diff').value;
-        const maxTime = parseInt(document.getElementById('f-time').value);
-        const minProt = parseInt(document.getElementById('f-prot').value);
-        const minRating = parseInt(document.getElementById('f-rating').value);
-
-        let visibleIndex = 0;
-
-        window.recipes.forEach(r => {
-            const el = document.getElementById(`card-${r.id}`);
-            if(!el) return;
-
-            const ingString = (r.zutaten || []).map(z => z.name).join(' ').toLowerCase();
-            const searchableText = r.name.toLowerCase() + " " + ingString;
-            
-            const matchSearch = searchTerms.every(term => searchableText.includes(term));
-            const matchDiff = diff === 'all' || parseInt(r.schwierigkeit) === parseInt(diff);
-            const matchTime = parseInt(r.dauer || 0) <= maxTime;
-            const matchProt = parseInt(r.protein || 0) >= minProt;
-            const matchRating = parseInt(r.rating || 0) >= minRating;
-
-            if (matchSearch && matchDiff && matchTime && matchProt && matchRating) {
-                el.classList.remove('hidden');
-                
-                const col = visibleIndex % COLUMNS;
-                const row = Math.floor(visibleIndex / COLUMNS);
-                const posX = col * (CARD_WIDTH + GAP);
-                const posY = row * (CARD_HEIGHT + GAP);
-
-                el.style.setProperty('--x', `${posX}px`);
-                el.style.setProperty('--y', `${posY}px`);
-                
-                visibleIndex++;
-            } else {
-                el.classList.add('hidden');
-            }
-        });
-    }
-
-    // --- DETAIL, URL-ROUTING & RECHNER ---
-    // Der Parameter updateUrl verhindert, dass wir beim Start-Laden eine Endlosschleife erzeugen
+    // --- DETAIL ANSICHT MIT NEUEN NÄHRWERTEN ---
     window.openDetail = function(r, updateUrl = true) {
         const overlay = document.getElementById('detail-overlay');
         const content = document.getElementById('detail-content');
-        
-        // NEU: Scroll-Position immer auf 0 (ganz oben) setzen beim Öffnen
         overlay.scrollTop = 0;
         
-        // NEU: URL ändern, ohne die Seite neu zu laden
-        if (updateUrl) {
-            const newUrl = window.location.pathname + '?id=' + r.id;
-            window.history.pushState({ id: r.id }, '', newUrl);
-        }
+        if (updateUrl) window.history.pushState({ id: r.id }, '', window.location.pathname + '?id=' + r.id);
 
         let currentServings = r.basisPortionen || 2;
 
         window.renderDetailView = function(servings) {
+            const factor = servings / (r.basisPortionen || 2);
+            
             let zutatenHtml = '';
             (r.zutaten || []).forEach(z => {
-                const amount = ((z.menge / (r.basisPortionen || 2)) * servings);
+                const amount = z.menge * factor;
                 const display = amount % 1 === 0 ? amount : amount.toFixed(1);
                 zutatenHtml += `<div style="display:flex; justify-content:space-between; padding:15px 0; border-bottom:1px solid #eee; font-size:18px;"><b style="width:120px;">${display} ${z.einheit}</b><span>${z.name}</span></div>`;
             });
 
-            const p = ((r.protein / (r.basisPortionen||2)) * servings).toFixed(0);
-            const c = ((r.kalorien / (r.basisPortionen||2)) * servings).toFixed(0);
+            // Macros skalieren (Fallback auf alte Struktur)
+            const cal = ((r.macros?.kalorien || r.kalorien || 0) * factor).toFixed(0);
+            const prot = ((r.macros?.protein || r.protein || 0) * factor).toFixed(0);
+            const carbs = ((r.macros?.kohlenhydrate || 0) * factor).toFixed(0);
+            const fat = ((r.macros?.fett || 0) * factor).toFixed(0);
+
+            // Micros skalieren
+            let microsHtml = '';
+            (r.micros || []).forEach(m => {
+                const amount = m.menge * factor;
+                const display = amount % 1 === 0 ? amount : amount.toFixed(1);
+                microsHtml += `<div class="micro-tag">${m.name}: ${display}${m.einheit}</div>`;
+            });
+
             const imgSrc = r.bildBase64 || 'https://images.unsplash.com/photo-1495195134817-a1a2807facx1?auto=format&fit=crop&q=80&w=800';
 
             content.innerHTML = `
@@ -441,24 +432,29 @@
                                 <div style="font-size:11px; font-weight:800; color:#888; text-transform:uppercase;">Portionen</div>
                                 <input type="number" class="servings-input" value="${servings}" min="1" oninput="window.renderDetailView(this.value); this.focus();">
                             </div>
-                            <div style="text-align:right;">
-                                <div>Protein: <b>${p}g</b></div>
-                                <div>Energie: <b>${c} kcal</b></div>
-                            </div>
                         </div>
 
-                        <h3 style="font-size:24px;">Zutaten</h3>
+                        <div class="nutrition-grid">
+                            <div class="nut-box"><span>Kalorien</span><b>${cal}</b></div>
+                            <div class="nut-box"><span>Protein</span><b>${prot}g</b></div>
+                            <div class="nut-box"><span>Kohlenhydrate</span><b>${carbs}g</b></div>
+                            <div class="nut-box"><span>Fett</span><b>${fat}g</b></div>
+                        </div>
+                        
+                        <div class="micro-tags">${microsHtml}</div>
+
+                        <h3 style="font-size:24px; margin-top:40px;">Zutaten</h3>
                         <div style="margin-bottom:40px;">${zutatenHtml}</div>
                         
                         <h3 style="font-size:24px;">Zubereitung</h3>
-                        <div style="font-size:18px; line-height:1.6; white-space:pre-wrap;">${r.anleitung}</div>
+                        <div style="font-size:18px; line-height:1.6;">${r.anleitung}</div>
 
                         <div class="action-row">
                             <button class="btn-edit" onclick="editRecipe('${r.id}')">Bearbeiten</button>
                             <button class="btn-delete" onclick="deleteRecipe('${r.id}')">Löschen</button>
                         </div>
                     </div>
-                    <img src="${imgSrc}" style="width:100%; border-radius:var(--card-radius); -webkit-user-drag: none;">
+                    <img src="${imgSrc}" style="width:100%; border-radius:var(--card-radius); -webkit-user-drag: none; position:sticky; top:40px;">
                 </div>
             `;
         };
@@ -466,11 +462,8 @@
         overlay.classList.add('active');
     }
 
-    // Hört auf den "Zurück"-Button im Browser
     window.addEventListener('popstate', (event) => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const recipeId = urlParams.get('id');
-        
+        const recipeId = new URLSearchParams(window.location.search).get('id');
         if (recipeId) {
             const r = window.recipes.find(rec => rec.id === recipeId);
             if (r) window.openDetail(r, false);
@@ -479,21 +472,18 @@
         }
     });
 
-    // NEU: Beim Schließen URL bereinigen
     window.closeOverlay = function(id, updateUrl = true) {
         document.getElementById(id).classList.remove('active');
-        if (id === 'detail-overlay' && updateUrl) {
-            // URL wieder auf die saubere Basis setzen (ohne ?id=...)
-            window.history.pushState({}, '', window.location.pathname);
-        }
+        if (id === 'detail-overlay' && updateUrl) window.history.pushState({}, '', window.location.pathname);
     }
 
-    // --- CRUD: EDITOR, BILDER, LÖSCHEN ---
+    // --- CRUD: EDITOR ---
     window.openEditor = function() {
         document.getElementById('ed-title').innerText = "Neues Rezept";
         document.getElementById('ed-id').value = "";
         document.querySelectorAll('#editor-overlay input, #editor-overlay textarea').forEach(el => el.value = '');
         document.getElementById('ed-ingredients').innerHTML = '';
+        document.getElementById('ed-micros').innerHTML = '';
         document.getElementById('ed-img-preview').style.opacity = '0';
         document.getElementById('ed-img-base64').value = '';
         window.addIngredientRow();
@@ -503,8 +493,8 @@
     window.editRecipe = function(id) {
         const r = window.recipes.find(rec => rec.id === id);
         if(!r) return;
-        
         window.closeOverlay('detail-overlay', false);
+        
         document.getElementById('ed-title').innerText = "Rezept bearbeiten";
         document.getElementById('ed-id').value = r.id;
         document.getElementById('ed-name').value = r.name || '';
@@ -513,8 +503,12 @@
         document.getElementById('ed-diff').value = r.schwierigkeit || 1;
         document.getElementById('ed-rating').value = r.rating || 5;
         document.getElementById('ed-servings').value = r.basisPortionen || 2;
-        document.getElementById('ed-cal').value = r.kalorien || '';
-        document.getElementById('ed-prot').value = r.protein || '';
+        
+        document.getElementById('ed-cal').value = r.macros?.kalorien || r.kalorien || '';
+        document.getElementById('ed-prot').value = r.macros?.protein || r.protein || '';
+        document.getElementById('ed-carbs').value = r.macros?.kohlenhydrate || '';
+        document.getElementById('ed-fat').value = r.macros?.fett || '';
+        
         document.getElementById('ed-instructions').value = r.anleitung || '';
         
         if(r.bildBase64) {
@@ -523,10 +517,11 @@
             document.getElementById('ed-img-base64').value = r.bildBase64;
         }
 
-        const ingContainer = document.getElementById('ed-ingredients');
-        ingContainer.innerHTML = '';
+        document.getElementById('ed-ingredients').innerHTML = '';
         (r.zutaten || []).forEach(z => window.addIngredientRow(z.menge, z.einheit, z.name));
-        if(!r.zutaten || r.zutaten.length === 0) window.addIngredientRow();
+        
+        document.getElementById('ed-micros').innerHTML = '';
+        (r.micros || []).forEach(m => window.addMicroRow(m.menge, m.einheit, m.name));
 
         document.getElementById('editor-overlay').classList.add('active');
     }
@@ -540,11 +535,15 @@
     }
 
     window.addIngredientRow = function(m = '', e = '', n = '') {
-        const container = document.getElementById('ed-ingredients');
-        const div = document.createElement('div');
-        div.className = 'ing-row';
+        const div = document.createElement('div'); div.className = 'ing-row';
         div.innerHTML = `<input type="number" class="amount" placeholder="Menge" value="${m}"><input type="text" class="unit" placeholder="Einheit" value="${e}"><input type="text" class="name" placeholder="Name" value="${n}">`;
-        container.appendChild(div);
+        document.getElementById('ed-ingredients').appendChild(div);
+    }
+
+    window.addMicroRow = function(m = '', e = '', n = '') {
+        const div = document.createElement('div'); div.className = 'micro-row';
+        div.innerHTML = `<input type="number" class="amount" placeholder="Menge" value="${m}"><input type="text" class="unit" placeholder="Einheit (mg, µg)" value="${e}"><input type="text" class="name" placeholder="z.B. Omega 3" value="${n}">`;
+        document.getElementById('ed-micros').appendChild(div);
     }
 
     window.handleImageUpload = function(event) {
@@ -556,11 +555,9 @@
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 const MAX_WIDTH = 800;
-                const scaleSize = MAX_WIDTH / img.width;
                 canvas.width = MAX_WIDTH;
-                canvas.height = img.height * scaleSize;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                canvas.height = img.height * (MAX_WIDTH / img.width);
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
                 const base64 = canvas.toDataURL('image/webp', 0.7);
                 document.getElementById('ed-img-preview').src = base64;
                 document.getElementById('ed-img-preview').style.opacity = '1';
@@ -575,13 +572,18 @@
         const btn = document.getElementById('ed-save-btn');
         btn.innerText = "Wird gespeichert...";
         
-        const id = document.getElementById('ed-id').value;
         let zutaten = [];
         document.querySelectorAll('.ing-row').forEach(row => {
             const menge = parseFloat(row.querySelector('.amount').value);
-            const einheit = row.querySelector('.unit').value.trim();
             const name = row.querySelector('.name').value.trim();
-            if(name) zutaten.push({ menge: isNaN(menge)?0:menge, einheit, name });
+            if(name) zutaten.push({ menge: isNaN(menge)?0:menge, einheit: row.querySelector('.unit').value.trim(), name });
+        });
+
+        let micros = [];
+        document.querySelectorAll('.micro-row').forEach(row => {
+            const menge = parseFloat(row.querySelector('.amount').value);
+            const name = row.querySelector('.name').value.trim();
+            if(name) micros.push({ menge: isNaN(menge)?0:menge, einheit: row.querySelector('.unit').value.trim(), name });
         });
 
         const data = {
@@ -591,78 +593,62 @@
             dauer: parseInt(document.getElementById('ed-time').value) || 0,
             schwierigkeit: parseInt(document.getElementById('ed-diff').value) || 1,
             rating: parseInt(document.getElementById('ed-rating').value) || 5,
-            kalorien: parseInt(document.getElementById('ed-cal').value) || 0,
-            protein: parseInt(document.getElementById('ed-prot').value) || 0,
             basisPortionen: parseInt(document.getElementById('ed-servings').value) || 2,
-            anleitung: document.getElementById('ed-instructions').value,
-            zutaten: zutaten
+            macros: {
+                kalorien: parseInt(document.getElementById('ed-cal').value) || 0,
+                protein: parseInt(document.getElementById('ed-prot').value) || 0,
+                kohlenhydrate: parseInt(document.getElementById('ed-carbs').value) || 0,
+                fett: parseInt(document.getElementById('ed-fat').value) || 0
+            },
+            micros: micros,
+            zutaten: zutaten,
+            anleitung: document.getElementById('ed-instructions').value
         };
 
         try {
-            if(id) {
-                await updateDoc(doc(db, "recipes", id), data);
-            } else {
-                await addDoc(collection(db, "recipes"), data);
-            }
+            const id = document.getElementById('ed-id').value;
+            if(id) await updateDoc(doc(db, "recipes", id), data);
+            else await addDoc(collection(db, "recipes"), data);
+            
             window.closeOverlay('editor-overlay');
             window.loadRecipes();
-        } catch(e) {
-            alert("Fehler: " + e.message);
-        } finally {
-            btn.innerText = "REZEPT SPEICHERN";
-        }
+        } catch(e) { alert("Fehler: " + e.message); } 
+        finally { btn.innerText = "REZEPT SPEICHERN"; }
     }
 
-    // --- PHYSICS ENGINE & TOUCHPAD ZOOM FIX ---
+    // --- PHYSICS ENGINE ---
     let isDragging = false, startX, startY, scrollX, scrollY, dragDist = 0;
     const vp = document.getElementById('viewport');
     
     vp.addEventListener('pointerdown', (e) => {
-        isDragging = true; 
-        dragDist = 0; 
-        startX = e.pageX; 
-        startY = e.pageY; 
-        scrollX = targetCamX; 
-        scrollY = targetCamY;
+        if(e.target.closest('#reset-view-btn') || e.target.closest('.btn-logout')) return;
+        isDragging = true; dragDist = 0; startX = e.pageX; startY = e.pageY; scrollX = targetCamX; scrollY = targetCamY;
     });
     
     window.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
-        const dx = e.pageX - startX;
-        const dy = e.pageY - startY;
+        const dx = e.pageX - startX; const dy = e.pageY - startY;
         dragDist += Math.abs(dx) + Math.abs(dy); 
-        
-        targetCamX = scrollX - dx / currentScale; 
-        targetCamY = scrollY - dy / currentScale;
+        targetCamX = scrollX - dx / currentScale; targetCamY = scrollY - dy / currentScale;
     });
     
     window.addEventListener('pointerup', () => isDragging = false);
     
     window.addEventListener('wheel', (e) => {
-        if(document.querySelector('.overlay.active') || document.getElementById('filter-sidebar').classList.contains('open')) return;
-        
-        // Zoom nur ausführen, wenn man NICHT über dem Filter-Menü ist
-        if(e.target.closest('#filter-sidebar')) return;
-
+        if(document.querySelector('.overlay.active')) return;
         e.preventDefault(); 
         const zoomSpeed = e.ctrlKey ? 0.005 : 0.001;
         targetScale = Math.min(Math.max(0.15, targetScale - e.deltaY * zoomSpeed), 3);
     }, { passive: false }); 
 
     function animate() {
-        camX += (targetCamX - camX) * 0.1; 
-        camY += (targetCamY - camY) * 0.1;
+        camX += (targetCamX - camX) * 0.1; camY += (targetCamY - camY) * 0.1;
         currentScale += (targetScale - currentScale) * 0.1;
-        
         const offsetX = (window.innerWidth / 2) - (camX * currentScale);
         const offsetY = (window.innerHeight / 2) - (camY * currentScale);
-        
         document.getElementById('canvas').style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${currentScale})`;
         requestAnimationFrame(animate);
     }
-
-    window.resetFilters();
-    window.loadRecipes();
     animate();
 </script>
 </body>
